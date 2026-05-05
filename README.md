@@ -174,8 +174,4 @@ Output KMZ should be **byte-equivalent in geometry** to the browser version for 
 
 If you need bit-exact output for diff tests, compare unzipped `doc.kml` content rather than the `.kmz` archive directly.
 
----
 
-## License
-
-MIT
