@@ -1,0 +1,18 @@
+{
+  "latitude": 48.8566,
+  "longitude": 2.3522,
+  "scale": 10,
+  "gridType": "Q12",
+  "gridName": "Mission Paris Centre",
+  "gridColor": "#FF0000",
+  "colorName": "red",
+  "colorOpacity": 0.5,
+  "contentType": "grid-points",
+  "referencePointChoice": "center",
+  "letteringDirection": "ascending",
+  "deviation": 0,
+  "labelSize": 1,
+  "iconSize": 2,
+  "swapAxes": false,
+  "doubleEntry": false
+}

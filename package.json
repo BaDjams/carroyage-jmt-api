@@ -1,0 +1,38 @@
+{
+  "name": "carroyage-jmt-api",
+  "version": "1.0.0",
+  "description": "REST API generating KMZ grid files identical to Carroyage-JMT (CADO grid system)",
+  "main": "src/server.js",
+  "type": "commonjs",
+  "scripts": {
+    "start": "node src/server.js",
+    "dev": "node --watch src/server.js",
+    "test": "node --test tests/*.test.js"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "dependencies": {
+    "@napi-rs/canvas": "^0.1.59",
+    "cors": "^2.8.5",
+    "express": "^4.21.0",
+    "helmet": "^8.0.0",
+    "jszip": "^3.10.1",
+    "morgan": "^1.10.0",
+    "zod": "^3.23.8"
+  },
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/BaDjams/carroyage-jmt-api.git"
+  },
+  "keywords": [
+    "kmz",
+    "kml",
+    "grid",
+    "cado",
+    "carroyage",
+    "rest-api",
+    "geospatial"
+  ]
+}
