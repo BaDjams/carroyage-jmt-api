@@ -1,0 +1,366 @@
+<!doctype html>
+<html lang="fr">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>carroyage-jmt-api — Test tunnel</title>
+    <style>
+      :root {
+        --bg: #0f172a;
+        --panel: #1e293b;
+        --panel-2: #334155;
+        --text: #e2e8f0;
+        --muted: #94a3b8;
+        --accent: #38bdf8;
+        --ok: #4ade80;
+        --err: #f87171;
+        --warn: #facc15;
+      }
+      * { box-sizing: border-box; }
+      body {
+        margin: 0;
+        font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+        background: var(--bg);
+        color: var(--text);
+        line-height: 1.4;
+      }
+      header {
+        padding: 16px 24px;
+        background: var(--panel);
+        border-bottom: 1px solid var(--panel-2);
+        display: flex;
+        align-items: center;
+        gap: 16px;
+        flex-wrap: wrap;
+      }
+      header h1 { font-size: 16px; margin: 0; font-weight: 600; }
+      .pill {
+        font-size: 12px;
+        padding: 4px 8px;
+        border-radius: 999px;
+        background: var(--panel-2);
+        color: var(--muted);
+      }
+      .pill.ok { background: rgba(74, 222, 128, .15); color: var(--ok); }
+      .pill.err { background: rgba(248, 113, 113, .15); color: var(--err); }
+      .pill.warn { background: rgba(250, 204, 21, .15); color: var(--warn); }
+      main {
+        max-width: 1100px;
+        margin: 0 auto;
+        padding: 24px;
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 24px;
+      }
+      @media (max-width: 900px) { main { grid-template-columns: 1fr; } }
+      section {
+        background: var(--panel);
+        border: 1px solid var(--panel-2);
+        border-radius: 8px;
+        padding: 16px;
+      }
+      section h2 { margin: 0 0 12px; font-size: 14px; font-weight: 600; color: var(--accent); }
+      label {
+        display: block;
+        font-size: 12px;
+        color: var(--muted);
+        margin-bottom: 4px;
+      }
+      .row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 12px; }
+      .row.three { grid-template-columns: 1fr 1fr 1fr; }
+      .row.full { grid-template-columns: 1fr; }
+      input, select {
+        width: 100%;
+        padding: 8px 10px;
+        background: var(--bg);
+        border: 1px solid var(--panel-2);
+        border-radius: 6px;
+        color: var(--text);
+        font-size: 13px;
+      }
+      input[type="checkbox"] { width: auto; }
+      .check {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        font-size: 13px;
+        color: var(--text);
+      }
+      .check label { margin: 0; color: var(--text); }
+      button {
+        padding: 8px 14px;
+        background: var(--accent);
+        color: #0c1322;
+        border: 0;
+        border-radius: 6px;
+        font-weight: 600;
+        cursor: pointer;
+        font-size: 13px;
+      }
+      button.secondary { background: var(--panel-2); color: var(--text); }
+      button:disabled { opacity: .5; cursor: not-allowed; }
+      .actions { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 8px; }
+      pre {
+        background: var(--bg);
+        border: 1px solid var(--panel-2);
+        border-radius: 6px;
+        padding: 12px;
+        font-size: 12px;
+        overflow: auto;
+        max-height: 360px;
+        margin: 0;
+      }
+      .log { font-family: ui-monospace, "Cascadia Code", Consolas, monospace; font-size: 12px; }
+      .log .line { padding: 2px 0; }
+      .log .ok { color: var(--ok); }
+      .log .err { color: var(--err); }
+      .log .info { color: var(--muted); }
+      .footer-note { font-size: 12px; color: var(--muted); margin-top: 8px; }
+    </style>
+  </head>
+  <body>
+    <header>
+      <h1>carroyage-jmt-api</h1>
+      <span id="health-pill" class="pill">/health: ?</span>
+      <span id="root-pill" class="pill">/api: ?</span>
+      <span style="flex:1"></span>
+      <button class="secondary" id="btn-ping">Tester le tunnel</button>
+    </header>
+
+    <main>
+      <section>
+        <h2>Paramètres CADO</h2>
+        <form id="form">
+          <div class="row">
+            <div>
+              <label>latitude</label>
+              <input name="latitude" type="number" step="any" value="48.8566" required />
+            </div>
+            <div>
+              <label>longitude</label>
+              <input name="longitude" type="number" step="any" value="2.3522" required />
+            </div>
+          </div>
+
+          <div class="row">
+            <div>
+              <label>scale (m)</label>
+              <input name="scale" type="number" step="any" value="10" required />
+            </div>
+            <div>
+              <label>gridType</label>
+              <select name="gridType">
+                <option>Q12</option>
+                <option>Z18</option>
+                <option>Z14</option>
+                <option>Q9</option>
+                <option>Z26</option>
+                <option>custom</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="row full">
+            <div>
+              <label>gridName</label>
+              <input name="gridName" type="text" value="Mission Paris Centre" />
+            </div>
+          </div>
+
+          <div class="row three">
+            <div>
+              <label>contentType</label>
+              <select name="contentType">
+                <option value="grid-points" selected>grid-points</option>
+                <option value="grid-only">grid-only</option>
+                <option value="points-only">points-only</option>
+              </select>
+            </div>
+            <div>
+              <label>referencePointChoice</label>
+              <select name="referencePointChoice">
+                <option value="center" selected>center</option>
+                <option value="origin">origin</option>
+              </select>
+            </div>
+            <div>
+              <label>letteringDirection</label>
+              <select name="letteringDirection">
+                <option value="ascending" selected>ascending</option>
+                <option value="descending">descending</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="row three">
+            <div>
+              <label>gridColor</label>
+              <input name="gridColor" type="color" value="#FF0000" />
+            </div>
+            <div>
+              <label>colorName</label>
+              <input name="colorName" type="text" value="red" />
+            </div>
+            <div>
+              <label>colorOpacity</label>
+              <input name="colorOpacity" type="number" step="0.05" min="0" max="1" value="0.5" />
+            </div>
+          </div>
+
+          <div class="row three">
+            <div>
+              <label>deviation</label>
+              <input name="deviation" type="number" step="any" value="0" />
+            </div>
+            <div>
+              <label>labelSize</label>
+              <input name="labelSize" type="number" step="0.1" min="0" max="10" value="1" />
+            </div>
+            <div>
+              <label>iconSize</label>
+              <input name="iconSize" type="number" step="0.1" min="0" max="10" value="2" />
+            </div>
+          </div>
+
+          <div class="row">
+            <div class="check">
+              <input type="checkbox" id="swapAxes" name="swapAxes" />
+              <label for="swapAxes">swapAxes</label>
+            </div>
+            <div class="check">
+              <input type="checkbox" id="doubleEntry" name="doubleEntry" />
+              <label for="doubleEntry">doubleEntry</label>
+            </div>
+          </div>
+
+          <div class="actions">
+            <button type="button" id="btn-preview" class="secondary">Aperçu (preview)</button>
+            <button type="button" id="btn-generate">Télécharger le KMZ</button>
+          </div>
+          <div class="footer-note">
+            Le fichier sera proposé en téléchargement par le navigateur — il ne sera pas écrit dans le dossier du repo.
+          </div>
+        </form>
+      </section>
+
+      <section>
+        <h2>Réponse</h2>
+        <div class="log" id="log"></div>
+        <pre id="output">—</pre>
+      </section>
+    </main>
+
+    <script>
+      const $ = (sel) => document.querySelector(sel);
+      const log = (msg, cls = "info") => {
+        const el = document.createElement("div");
+        el.className = "line " + cls;
+        const t = new Date().toLocaleTimeString();
+        el.textContent = `[${t}] ${msg}`;
+        $("#log").prepend(el);
+      };
+
+      function readForm() {
+        const f = $("#form");
+        const fd = new FormData(f);
+        const obj = {};
+        for (const [k, v] of fd.entries()) obj[k] = v;
+        // numeric coercion
+        ["latitude", "longitude", "scale", "colorOpacity", "deviation", "labelSize", "iconSize"].forEach((k) => {
+          if (obj[k] !== undefined && obj[k] !== "") obj[k] = Number(obj[k]);
+        });
+        obj.swapAxes = f.swapAxes.checked;
+        obj.doubleEntry = f.doubleEntry.checked;
+        return obj;
+      }
+
+      async function ping() {
+        const setPill = (id, ok, label) => {
+          const el = document.getElementById(id);
+          el.className = "pill " + (ok ? "ok" : "err");
+          el.textContent = label;
+        };
+        try {
+          const r = await fetch("/health");
+          const j = await r.json();
+          setPill("health-pill", r.ok && j.status === "ok", `/health: ${r.status} ${j.status || ""}`);
+        } catch (e) {
+          setPill("health-pill", false, "/health: KO");
+        }
+        try {
+          const r = await fetch("/api");
+          const j = await r.json();
+          setPill("root-pill", r.ok, `/api: ${r.status} ${j.name || ""}`);
+          $("#output").textContent = JSON.stringify(j, null, 2);
+        } catch (e) {
+          setPill("root-pill", false, "/api: KO");
+        }
+      }
+
+      async function preview() {
+        const body = readForm();
+        log("POST /api/kmz/cado/preview", "info");
+        try {
+          const r = await fetch("/api/kmz/cado/preview", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(body),
+          });
+          const j = await r.json();
+          $("#output").textContent = JSON.stringify(j, null, 2);
+          log(`preview ${r.status}`, r.ok ? "ok" : "err");
+        } catch (e) {
+          log("preview error: " + e.message, "err");
+        }
+      }
+
+      async function generate() {
+        const body = readForm();
+        log("POST /api/kmz/cado", "info");
+        try {
+          const r = await fetch("/api/kmz/cado", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(body),
+          });
+          if (!r.ok) {
+            const j = await r.json().catch(() => ({}));
+            $("#output").textContent = JSON.stringify(j, null, 2);
+            log(`generate ${r.status}`, "err");
+            return;
+          }
+          const cells = r.headers.get("X-Grid-Cells");
+          const origin = r.headers.get("X-Grid-Origin");
+          const cd = r.headers.get("Content-Disposition") || "";
+          const m = cd.match(/filename="([^"]+)"/);
+          const filename = m ? m[1] : (body.gridName || "cado") + ".kmz";
+
+          const blob = await r.blob();
+          const url = URL.createObjectURL(blob);
+          const a = document.createElement("a");
+          a.href = url;
+          a.download = filename;
+          document.body.appendChild(a);
+          a.click();
+          a.remove();
+          URL.revokeObjectURL(url);
+
+          $("#output").textContent = JSON.stringify(
+            { ok: true, filename, bytes: blob.size, cells, origin },
+            null,
+            2,
+          );
+          log(`KMZ téléchargé (${blob.size} octets, ${cells} cellules)`, "ok");
+        } catch (e) {
+          log("generate error: " + e.message, "err");
+        }
+      }
+
+      $("#btn-ping").addEventListener("click", ping);
+      $("#btn-preview").addEventListener("click", preview);
+      $("#btn-generate").addEventListener("click", generate);
+
+      ping();
+    </script>
+  </body>
+</html>

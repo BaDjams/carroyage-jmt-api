@@ -1,3 +1,4 @@
+const path = require('path');
 const express = require('express');
 const helmet = require('helmet');
 const cors = require('cors');
@@ -10,12 +11,24 @@ const HOST = process.env.HOST || '0.0.0.0';
 
 const app = express();
 
-app.use(helmet());
+app.use(
+  helmet({
+    contentSecurityPolicy: {
+      useDefaults: true,
+      directives: {
+        'script-src': ["'self'", "'unsafe-inline'"],
+        'style-src': ["'self'", "'unsafe-inline'"],
+      },
+    },
+  }),
+);
 app.use(cors());
 app.use(express.json({ limit: '256kb' }));
 app.use(morgan('combined'));
 
-app.get('/', (_req, res) => {
+app.use(express.static(path.join(__dirname, '..', 'public')));
+
+app.get('/api', (_req, res) => {
   res.json({
     name: 'carroyage-jmt-api',
     version: '1.0.0',
@@ -23,6 +36,7 @@ app.get('/', (_req, res) => {
       'POST /api/kmz/cado': 'Generate a CADO KMZ file',
       'POST /api/kmz/cado/preview': 'Compute grid metadata without generating the KMZ',
       'GET /health': 'Health check',
+      'GET /': 'Test page (HTML)',
     },
     docs: 'See README.md',
   });
