@@ -44,15 +44,79 @@ function resolveGridBounds(input) {
   };
 }
 
+function haversineDistance(lat1, lon1, lat2, lon2) {
+  const R = 6371e3;
+  const lat1Rad = toRad(lat1);
+  const lat2Rad = toRad(lat2);
+  const deltaLatRad = toRad(lat2 - lat1);
+  const deltaLonRad = toRad(lon2 - lon1);
+  const a =
+    Math.sin(deltaLatRad / 2) ** 2 +
+    Math.cos(lat1Rad) * Math.cos(lat2Rad) * Math.sin(deltaLonRad / 2) ** 2;
+  return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+}
+
+function resolveZoneBounds(point1, point2, scale) {
+  // Matches getZoneCadoConfigAndBounds() in zoneDownloader.js exactly:
+  // - NW corner = (maxLat, minLon), SE corner = (minLat, maxLon)
+  // - Width measured at nwLat via haversine (not centerLat flat approx)
+  // - Height measured along meridian via haversine
+  // - Reference point = center of zone → calculateGridData uses center mode
+  const nwLat = Math.max(point1.latitude, point2.latitude);
+  const seLat = Math.min(point1.latitude, point2.latitude);
+  const nwLon = Math.min(point1.longitude, point2.longitude);
+  const seLon = Math.max(point1.longitude, point2.longitude);
+
+  const widthMeters = haversineDistance(nwLat, nwLon, nwLat, seLon);
+  const heightMeters = haversineDistance(nwLat, nwLon, seLat, nwLon);
+
+  const numCols = Math.max(1, Math.ceil(widthMeters / scale));
+  const numRows = Math.max(1, Math.ceil(heightMeters / scale));
+
+  return {
+    latitude: (nwLat + seLat) / 2,
+    longitude: (nwLon + seLon) / 2,
+    startRow: 1,
+    endRow: numRows,
+    startCol: 'A',
+    endCol: numberToLetter(numCols),
+  };
+}
+
 function buildConfig(input) {
-  const bounds = resolveGridBounds(input);
+  const letteringDirection = input.letteringDirection || 'ascending';
+  let bounds;
+  let refLat = input.latitude;
+  let refLon = input.longitude;
+  let referencePointChoice = input.referencePointChoice || 'center';
+
+  if (input.zonePoint1 && input.zonePoint2) {
+    const zoneResult = resolveZoneBounds(
+      input.zonePoint1,
+      input.zonePoint2,
+      Number(input.scale),
+    );
+    bounds = {
+      startRow: zoneResult.startRow,
+      endRow: zoneResult.endRow,
+      startCol: zoneResult.startCol,
+      endCol: zoneResult.endCol,
+    };
+    refLat = zoneResult.latitude;
+    refLon = zoneResult.longitude;
+    // 'center' mirrors 'no_cross' in the browser app: calculateGridData uses center-offset mode
+    referencePointChoice = 'center';
+  } else {
+    bounds = resolveGridBounds(input);
+  }
+
   const contentType = input.contentType || 'grid-points';
   const includeGrid = ['grid-only', 'grid-points'].includes(contentType);
   const includePoints = ['points-only', 'grid-points'].includes(contentType);
 
   return {
-    latitude: Number(input.latitude),
-    longitude: Number(input.longitude),
+    latitude: Number(refLat),
+    longitude: Number(refLon),
     scale: Number(input.scale),
     gridColor: input.gridColor || '#FF0000',
     colorName: input.colorName || 'red',
@@ -62,8 +126,8 @@ function buildConfig(input) {
     deviation: input.deviation !== undefined ? Number(input.deviation) : 0,
     labelSize: input.labelSize !== undefined ? Number(input.labelSize) : 1,
     iconSize: input.iconSize !== undefined ? Number(input.iconSize) : 2,
-    referencePointChoice: input.referencePointChoice || 'center',
-    letteringDirection: input.letteringDirection || 'ascending',
+    referencePointChoice,
+    letteringDirection,
     startRow: bounds.startRow,
     endRow: bounds.endRow,
     startCol: bounds.startCol,
@@ -72,6 +136,7 @@ function buildConfig(input) {
     includePoints,
     swapAxes: !!input.swapAxes,
     doubleEntry: !!input.doubleEntry,
+    isZoneMode: !!(input.zonePoint1 && input.zonePoint2),
   };
 }
 

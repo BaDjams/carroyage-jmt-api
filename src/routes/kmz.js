@@ -54,17 +54,25 @@ router.post('/cado/preview', async (req, res, next) => {
     const { calculateGridData } = require('../lib/cado');
     const gridData = calculateGridData(config);
 
-    return res.json({
-      config,
-      stats: {
-        rows:
-          Math.abs(config.endRow - config.startRow) +
-          (config.endRow * config.startRow < 0 ? 0 : 1),
-        cells: gridData.points.length,
-        origin: gridData.a1Corner,
-        referenceCenter: [config.longitude, config.latitude],
-      },
-    });
+    const stats = {
+      rows: Math.abs(config.endRow - config.startRow) +
+        (config.endRow * config.startRow < 0 ? 0 : 1),
+      cells: gridData.points.length,
+      origin: gridData.a1Corner,
+      referenceCenter: [config.longitude, config.latitude],
+    };
+
+    if (config.isZoneMode) {
+      stats.zoneMode = true;
+      stats.zonePoint1 = parsed.data.zonePoint1;
+      stats.zonePoint2 = parsed.data.zonePoint2;
+      stats.gridDimensions = {
+        columns: config.endCol,
+        rows: config.endRow,
+      };
+    }
+
+    return res.json({ config, stats });
   } catch (err) {
     return next(err);
   }

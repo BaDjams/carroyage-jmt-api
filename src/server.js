@@ -5,6 +5,7 @@ const cors = require('cors');
 const morgan = require('morgan');
 
 const kmzRoutes = require('./routes/kmz');
+const imageRoutes = require('./routes/image');
 
 const PORT = parseInt(process.env.PORT, 10) || 3000;
 const HOST = process.env.HOST || '0.0.0.0';
@@ -33,8 +34,9 @@ app.get('/api', (_req, res) => {
     name: 'carroyage-jmt-api',
     version: '1.0.0',
     endpoints: {
-      'POST /api/kmz/cado': 'Generate a CADO KMZ file',
-      'POST /api/kmz/cado/preview': 'Compute grid metadata without generating the KMZ',
+      'POST /api/kmz/cado': 'Generate a CADO KMZ file (single coord or two-point zone)',
+      'POST /api/kmz/cado/preview': 'Compute grid metadata without generating the KMZ (single coord or two-point zone)',
+      'POST /api/image/cado': 'Generate a CADO PNG/JPEG image with map background (single coord or two-point zone)',
       'GET /health': 'Health check',
       'GET /': 'Test page (HTML)',
     },
@@ -45,6 +47,7 @@ app.get('/api', (_req, res) => {
 app.get('/health', (_req, res) => res.json({ status: 'ok' }));
 
 app.use('/api/kmz', kmzRoutes);
+app.use('/api/image', imageRoutes);
 
 app.use((_req, res) => res.status(404).json({ error: 'NotFound' }));
 
